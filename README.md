@@ -1,5 +1,21 @@
 # Proteus: A Self Designing Range Filter
 
+## Setup cmake:
+```bash
+mkdir build
+cd build
+cmake ..
+cd bench
+make
+```
+## Run the code with these arguments:
+
+```bash
+./my_Proteus 1 Proteus 8 0.1 <SOSD DATASET PATH, like books_200M_uint64>
+```
+
+## Intoduction
+
 We introduce Proteus, a novel self-designing approximate range filter, which configures itself based on sampled data in order to optimize its false positive rate (FPR) for a given space requirement.
 Proteus unifies the probabilistic and deterministic design spaces of state-of-the-art range filters to achieve robust performance across a larger variety of use cases.
 At the core of Proteus lies our Contextual Prefix FPR (CPFPR) model -- a formal framework for the FPR of prefix-based filters across their design spaces.
