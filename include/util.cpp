@@ -155,4 +155,53 @@ void strLoadQueries(std::string lQueryFilePath,
     delete[] rq_arr;
 }
 
+    void intGenerateWideCorrelatedQueries(std::vector<uint64_t> &skeys,
+                                          std::vector<std::pair<uint64_t, uint64_t>> &squeries) {
+        // 20% of n queries
+        size_t num_query = skeys.size() / 5;
+        std::srand(42);
+        std::mt19937 gen(42); // seed the generator
+        std::uniform_int_distribution<> distr0(0, skeys.size() - 1); // define the range
+        for (auto i = 0; i < num_query; i++) {
+            size_t j = distr0(gen);
+            squeries.emplace_back(skeys[j] + 1, skeys[j + 1] - 1);
+        }
+    }
+
+    void intLoadKeysSOSD(std::string keyFilePath,
+                         std::vector<uint64_t> &keys,
+                         std::vector<std::string> &skeys,
+                         std::set<uint64_t> &keyset,
+                         size_t max_num_keys) {
+
+        std::ifstream keyFile;
+
+        keyFile.open(keyFilePath);
+
+        // Read size
+        uint64_t size;
+        keyFile.read(reinterpret_cast<char *>(&size), sizeof(uint64_t));
+        size = std::min(size, max_num_keys);
+        keys.resize(size);
+
+        // Read values
+        keyFile.read(reinterpret_cast<char *>(keys.data()), size * sizeof(uint64_t));
+
+        for (auto k: keys) {
+            keyset.insert(k);
+        }
+
+
+        // Shuffle data
+        //std::default_random_engine rng(rand());
+        //std::shuffle(std::begin(keys), std::end(keys), rng);
+
+        std::sort(keys.begin(), keys.end());
+
+        // skeys is needed for FST
+        for (const auto &k: keys) {
+            skeys.push_back(util_uint64ToString(k));
+        }
+    }
+
 }

@@ -58,12 +58,12 @@ public:
 	void operator ++(int);
 	void operator --(int);
 
-    private:
+    //private:
 	void append(const position_t pos);
 	void append(const label_t label, const position_t pos);
 	void set(const level_t level, const position_t pos);
 
-    private:
+    //private:
 	bool is_valid_; // True means the iter currently points to a valid key
 
 	// PROTEUS

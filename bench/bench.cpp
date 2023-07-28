@@ -57,6 +57,8 @@ void runExperiment(std::vector<T>& keys,
                                        bpk); // BPK
         end = clock();
 
+        proteus->check_nodes_id(keys, std::get<0>(parameters));
+
     } else if (use_SuRF) {
         begin = clock();
         if (surf_hlen == 0 && surf_rlen == 0) {
@@ -169,7 +171,7 @@ void runExperiment(std::vector<T>& keys,
 
 
 int main(int argc, char **argv) {
-    assert(argc == 5);
+    //assert(argc == 5);
 
     is_int_bench = strtoull(argv[1], nullptr, 10) == 1;
     use_Proteus = (strcmp(argv[2], "Proteus") == 0);
@@ -184,7 +186,8 @@ int main(int argc, char **argv) {
     }
 
     std::string dataPath = "./my_data/";
-    std::string keyFilePath = dataPath + "data0.txt";
+    //std::string keyFilePath = dataPath + "data0.txt";
+    std::string keyFilePath = std::string(argv[5]);
     std::string lQueryFilePath = dataPath + "txn0.txt";
     std::string uQueryFilePath = dataPath + "upper_bound0.txt";
 
@@ -198,28 +201,34 @@ int main(int argc, char **argv) {
         std::vector<std::pair<std::string, std::string>> squeries;
         std::vector<std::pair<uint64_t, uint64_t>> sample_queries;
 
-        proteus::intLoadKeys(keyFilePath, keys, skeys, keyset);
-        proteus::intLoadQueries(lQueryFilePath, uQueryFilePath, queries, squeries);
-        
+        //proteus::intLoadKeys(keyFilePath, keys, skeys, keyset);
+        //proteus::intLoadQueries(lQueryFilePath, uQueryFilePath, queries, squeries);
+
+        //proteus::intLoadKeysSOSD(keyFilePath, keys, skeys, keyset, 1000);
+        // LOAD ALL THE KEYS
+        proteus::intLoadKeysSOSD(keyFilePath, keys, skeys, keyset);
+        proteus::intGenerateWideCorrelatedQueries(keys, queries);
+
         if (use_Proteus) {
             sample_queries = proteus::sampleQueries(queries, sample_proportion);
         }
 
         runExperiment(keys, keyset, queries, sample_queries, skeys, squeries);
 
-    } else {
-        std::vector<std::string> keys;
-        std::set<std::string> keyset;
-        std::vector<std::pair<std::string, std::string>> queries;
-        std::vector<std::pair<std::string, std::string>> sample_queries;
-
-        keylen = proteus::strLoadKeys(keyFilePath, keys, keyset) * 8;
-        proteus::strLoadQueries(lQueryFilePath, uQueryFilePath, queries);
-        
-        if (use_Proteus) {
-            sample_queries = proteus::sampleQueries(queries, sample_proportion);
-        }
-
-        runExperiment(keys, keyset, queries, sample_queries, keys, queries);
     }
+//    else {
+//        std::vector<std::string> keys;
+//        std::set<std::string> keyset;
+//        std::vector<std::pair<std::string, std::string>> queries;
+//        std::vector<std::pair<std::string, std::string>> sample_queries;
+//
+//        keylen = proteus::strLoadKeys(keyFilePath, keys, keyset) * 8;
+//        proteus::strLoadQueries(lQueryFilePath, uQueryFilePath, queries);
+//
+//        if (use_Proteus) {
+//            sample_queries = proteus::sampleQueries(queries, sample_proportion);
+//        }
+//
+//        runExperiment(keys, keyset, queries, sample_queries, keys, queries);
+//    }
 }

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include "config.hpp"
 #include "louds_dense.hpp"
@@ -36,11 +37,11 @@ public:
 	
     std::string getKey() const;
 
-    private:
+    //private:
 	void passToSparse();
 	bool incrementDenseIter();
 
-    private:
+    //private:
 	// true implies that dense_iter_ is valid
 	LoudsDense::Iter dense_iter_;
 	LoudsSparse::Iter sparse_iter_;
@@ -107,6 +108,85 @@ public:
     uint64_t getMemoryUsage() const;
     level_t getHeight() const;
     level_t getSparseStartLevel() const;
+
+    template<typename T>
+    void check_nodes_id(const std::vector<T> &keys, size_t L1) {
+        std::set<T> keys_up_to_L1;
+        std::vector<size_t> nodes_ids;
+
+        for (size_t i = 0; i < keys.size(); i++) {
+            keys_up_to_L1.insert(editKey(keys[i], L1, true));
+        }
+
+        nodes_ids.reserve(keys_up_to_L1.size());
+        for (T key: keys_up_to_L1) {
+            T left_key = key;
+            T right_key = key + 1;
+
+            iter_.clear(validLoudsDense(), validLoudsSparse());
+
+            size_t node_id = 0;
+            // Percolate the trie and find num_node relative to left_key
+            if (validLoudsDense()) {
+                louds_dense_->moveToKeyGreaterThan(left_key, right_key, iter_.dense_iter_, prefix_filter);
+                node_id = iter_.dense_iter_.pos_in_trie_.back();
+                if (!iter_.dense_iter_.isComplete()) {
+                    if (!iter_.dense_iter_.isSearchComplete() && validLoudsSparse()) {
+                        iter_.passToSparse();
+                        louds_sparse_->moveToKeyGreaterThan(left_key, right_key,
+                                                            iter_.sparse_iter_,
+                                                            prefix_filter);
+
+                        node_id += iter_.sparse_iter_.pos_in_trie_.back();
+                        nodes_ids.push_back(node_id);
+                    } else if (!iter_.dense_iter_.isMoveLeftComplete() && validLoudsSparse()) {
+                        iter_.passToSparse();
+                        iter_.sparse_iter_.moveToLeftMostKey();
+                    }
+                } else {
+                    nodes_ids.push_back(node_id);
+                }
+            } else if (validLoudsSparse()) {
+                louds_sparse_->moveToKeyGreaterThan(left_key, right_key,
+                                                    iter_.sparse_iter_,
+                                                    prefix_filter);
+
+                node_id += iter_.sparse_iter_.pos_in_trie_.back();
+                nodes_ids.push_back(node_id);
+
+            }
+        }
+        bool no_duplicate = false;
+        bool correct_size = false;
+
+        // check if nodes_ids is sorted
+        if (std::is_sorted(nodes_ids.begin(), nodes_ids.end())) {
+            std::cout << "nodes_ids is sorted" << std::endl;
+
+        } else {
+            std::cout << "nodes_ids is not sorted" << std::endl;
+        }
+
+        // find the first duplicate in nodes_ids
+        auto it = std::adjacent_find(nodes_ids.begin(), nodes_ids.end());
+        if (it != nodes_ids.end()) {
+            std::cout << "First duplicate element: " << *it << std::endl;
+        } else {
+            std::cout << "No duplicate elements" << std::endl;
+            no_duplicate = true;
+        }
+
+        // check if nodes_ids has same size than keys_up_to_L1
+        if (nodes_ids.size() == keys_up_to_L1.size()) {
+            std::cout << "nodes_ids has same size than keys_up_to_L1" << std::endl;
+            correct_size = true;
+        } else {
+            std::cout << "nodes_ids has not same size than keys_up_to_L1" << std::endl;
+        }
+        if (not(no_duplicate and correct_size)) {
+            exit(1);
+        }
+    }
 
     std::pair<uint8_t*, size_t> serialize() const {
         uint64_t metadata_size = sizeof(uint32_t) * 2;

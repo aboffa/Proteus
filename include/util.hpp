@@ -53,6 +53,15 @@ void strLoadQueries(std::string lQueryFilePath,
                     std::string rQueryFilePath,
                     std::vector<std::pair<std::string, std::string>>& squeries);
 
+    void intGenerateWideCorrelatedQueries(std::vector<uint64_t> &skeys,
+                                          std::vector<std::pair<uint64_t, uint64_t>> &squeries);
+
+    void intLoadKeysSOSD(std::string keyFilePath,
+                         std::vector<uint64_t> &keys,
+                         std::vector<std::string> &skeys,
+                         std::set<uint64_t> &keyset,
+                         size_t max_num_keys = UINT64_MAX);
+
 template<typename T>
 std::vector<std::pair<T, T>> sampleQueries(const std::vector<std::pair<T, T>>& queries, double sample_proportion) {
     std::vector<std::pair<T, T>> sample_queries;
