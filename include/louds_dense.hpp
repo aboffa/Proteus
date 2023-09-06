@@ -96,6 +96,8 @@ public:
 	std::vector<label_t> key_;
 	std::vector<position_t> pos_in_trie_;
 
+        size_t get_id();
+
 	friend class LoudsDense;
 	friend class Proteus;	// Allow LoudsSparse to get access to key prefix in LoudsDense Iter
     };
@@ -638,6 +640,14 @@ void LoudsDense::Iter::operator --(int) {
     set(key_len_ - 1, prev_pos);
     return moveToRightMostKey();
 }
+    size_t LoudsDense::Iter::get_id() {
+        if (key_len_ == 0){
+            return 0;
+            //return pos_in_trie_[0];
+        }
+        return pos_in_trie_[key_len_ - 1];
+        //return pos_in_trie_.back();
+    }
 
 } //namespace proteus
 

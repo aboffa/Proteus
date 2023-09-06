@@ -204,10 +204,12 @@ int main(int argc, char **argv) {
         //proteus::intLoadKeys(keyFilePath, keys, skeys, keyset);
         //proteus::intLoadQueries(lQueryFilePath, uQueryFilePath, queries, squeries);
 
-        //proteus::intLoadKeysSOSD(keyFilePath, keys, skeys, keyset, 1000);
-        // LOAD ALL THE KEYS
+        // Load all the keys in the file
         proteus::intLoadKeysSOSD(keyFilePath, keys, skeys, keyset);
-        proteus::intGenerateWideCorrelatedQueries(keys, queries);
+
+        // Generate adversarial queries
+        size_t n_queries = keys.size() / 5;
+        proteus::intGenerateAdversarialQueries(n_queries, keys, queries, squeries);
 
         if (use_Proteus) {
             sample_queries = proteus::sampleQueries(queries, sample_proportion);

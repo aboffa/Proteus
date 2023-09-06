@@ -155,17 +155,23 @@ void strLoadQueries(std::string lQueryFilePath,
     delete[] rq_arr;
 }
 
-    void intGenerateWideCorrelatedQueries(std::vector<uint64_t> &skeys,
-                                          std::vector<std::pair<uint64_t, uint64_t>> &squeries) {
-        // 20% of n queries
-        size_t num_query = skeys.size() / 5;
+    void intGenerateAdversarialQueries(const size_t n_queries, const std::vector<uint64_t> &keys,
+                                          std::vector<std::pair<uint64_t, uint64_t>> &queries,
+                                          std::vector<std::pair<std::string, std::string>> &squeries) {
         std::srand(42);
         std::mt19937 gen(42); // seed the generator
-        std::uniform_int_distribution<> distr0(0, skeys.size() - 1); // define the range
-        for (auto i = 0; i < num_query; i++) {
+        std::uniform_int_distribution<> distr0(0, keys.size() - 1); // define the range
+        queries.reserve(n_queries);
+        for (auto i = 0; i < n_queries; i++) {
             size_t j = distr0(gen);
-            squeries.emplace_back(skeys[j] + 1, skeys[j + 1] - 1);
+            queries.emplace_back(keys[j] + 1, keys[j + 1] - 1);
         }
+
+        squeries.reserve(n_queries);
+        for (const auto &q: queries) {
+            squeries.emplace_back(util_uint64ToString(q.first), util_uint64ToString(q.second));
+        }
+
     }
 
     void intLoadKeysSOSD(std::string keyFilePath,

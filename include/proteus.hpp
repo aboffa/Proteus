@@ -47,6 +47,8 @@ public:
 	LoudsSparse::Iter sparse_iter_;
 	bool could_be_fp_;
 
+    size_t get_id(bool valid_dense, bool valid_sparse);
+
 	friend class Proteus;
     };
 
@@ -112,6 +114,9 @@ public:
     template<typename T>
     void check_nodes_id(const std::vector<T> &keys, size_t L1) {
         std::set<T> keys_up_to_L1;
+        // given a key k
+        // if we look for k in the trie we end up in a certain node
+        // the vector "nodes_ids" will contain all unique nodes ids of the nodes we end up in for each key of the dataset (up to L1)
         std::vector<size_t> nodes_ids;
 
         for (size_t i = 0; i < keys.size(); i++) {
@@ -120,6 +125,7 @@ public:
 
         nodes_ids.reserve(keys_up_to_L1.size());
         for (T key: keys_up_to_L1) {
+            // main goal here: make the iterator traverse the trie
             T left_key = key;
             T right_key = key + 1;
 
@@ -129,7 +135,6 @@ public:
             // Percolate the trie and find num_node relative to left_key
             if (validLoudsDense()) {
                 louds_dense_->moveToKeyGreaterThan(left_key, right_key, iter_.dense_iter_, prefix_filter);
-                node_id = iter_.dense_iter_.pos_in_trie_.back();
                 if (!iter_.dense_iter_.isComplete()) {
                     if (!iter_.dense_iter_.isSearchComplete() && validLoudsSparse()) {
                         iter_.passToSparse();
@@ -137,54 +142,46 @@ public:
                                                             iter_.sparse_iter_,
                                                             prefix_filter);
 
-                        node_id += iter_.sparse_iter_.pos_in_trie_.back();
-                        nodes_ids.push_back(node_id);
                     } else if (!iter_.dense_iter_.isMoveLeftComplete() && validLoudsSparse()) {
                         iter_.passToSparse();
                         iter_.sparse_iter_.moveToLeftMostKey();
                     }
-                } else {
-                    nodes_ids.push_back(node_id);
                 }
             } else if (validLoudsSparse()) {
                 louds_sparse_->moveToKeyGreaterThan(left_key, right_key,
                                                     iter_.sparse_iter_,
                                                     prefix_filter);
-
-                node_id += iter_.sparse_iter_.pos_in_trie_.back();
-                nodes_ids.push_back(node_id);
-
             }
+            // after the iterator has traversed the trie and ended up in a node, we get the node id
+            // it is the sum of the last position reached by the LoudDense iterator and LoudsSparse iterator
+            node_id = iter_.get_id(validLoudsDense(), validLoudsSparse());
+            nodes_ids.push_back(node_id);
         }
-        bool no_duplicate = false;
-        bool correct_size = false;
-
         // check if nodes_ids is sorted
         if (std::is_sorted(nodes_ids.begin(), nodes_ids.end())) {
             std::cout << "nodes_ids is sorted" << std::endl;
 
         } else {
-            std::cout << "nodes_ids is not sorted" << std::endl;
+            std::cout << "nodes_ids is not sorted, sorting it" << std::endl;
+            // sorting to exactly check how many duplicates there are
+            std::sort(nodes_ids.begin(), nodes_ids.end());
         }
 
-        // find the first duplicate in nodes_ids
-        auto it = std::adjacent_find(nodes_ids.begin(), nodes_ids.end());
-        if (it != nodes_ids.end()) {
-            std::cout << "First duplicate element: " << *it << std::endl;
-        } else {
-            std::cout << "No duplicate elements" << std::endl;
-            no_duplicate = true;
+        // nodes_ids is sorted, counting the number of duplicates
+        size_t duplicate_count = 0;
+        for (size_t i = 0; i < nodes_ids.size(); i++) {
+            if (nodes_ids[i] == nodes_ids[i + 1]) {
+                duplicate_count++;
+            }
         }
 
-        // check if nodes_ids has same size than keys_up_to_L1
-        if (nodes_ids.size() == keys_up_to_L1.size()) {
-            std::cout << "nodes_ids has same size than keys_up_to_L1" << std::endl;
-            correct_size = true;
+        if (duplicate_count != 0) {
+            std::cout << " --> check_nodes_id ERROR, DUPLICATE EXISTS :(" << std::endl;
+            std::cout << " --> check_nodes_id percentage of duplicates: "
+                      << (duplicate_count * 100.) / double(nodes_ids.size())
+                      << " %" << std::endl;
         } else {
-            std::cout << "nodes_ids has not same size than keys_up_to_L1" << std::endl;
-        }
-        if (not(no_duplicate and correct_size)) {
-            exit(1);
+            std::cout << " --> check_nodes_id NO DUPLICATE :)" << std::endl;
         }
     }
 
@@ -482,6 +479,15 @@ bool Proteus::Iter::incrementDenseIter() {
     sparse_iter_.moveToLeftMostKey();
     return true;
 }
+
+    size_t Proteus::Iter::get_id(bool valid_dense, bool valid_sparse) {
+        size_t node_id = 0;
+        if (valid_dense)
+            node_id += dense_iter_.get_id();
+        if (valid_sparse)
+            node_id += sparse_iter_.get_id();
+        return node_id;
+    }
 
 } // namespace proteus
 

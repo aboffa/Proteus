@@ -77,6 +77,8 @@ public:
 	std::vector<label_t> key_;
 	std::vector<position_t> pos_in_trie_;
 
+        size_t get_id();
+
 	friend class LoudsSparse;
     };
 
@@ -658,6 +660,15 @@ void LoudsSparse::Iter::operator --(int) {
     set(key_len_ - 1, pos);
     return moveToRightMostKey();
 }
+
+    size_t LoudsSparse::Iter::get_id() {
+        if (key_len_ == 0){
+            return 0;
+            //return pos_in_trie_[0];
+        }
+        return pos_in_trie_[key_len_ - 1];
+        //return pos_in_trie_.back();
+    }
 
 } // namespace proteus
 

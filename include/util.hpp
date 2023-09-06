@@ -53,8 +53,9 @@ void strLoadQueries(std::string lQueryFilePath,
                     std::string rQueryFilePath,
                     std::vector<std::pair<std::string, std::string>>& squeries);
 
-    void intGenerateWideCorrelatedQueries(std::vector<uint64_t> &skeys,
-                                          std::vector<std::pair<uint64_t, uint64_t>> &squeries);
+    void intGenerateAdversarialQueries(const size_t n_queries, const std::vector<uint64_t> &keys,
+                                       std::vector<std::pair<uint64_t, uint64_t>> &queries,
+                                       std::vector<std::pair<std::string, std::string>> &squeries);
 
     void intLoadKeysSOSD(std::string keyFilePath,
                          std::vector<uint64_t> &keys,
