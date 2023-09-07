@@ -169,7 +169,7 @@ public:
 
         // nodes_ids is sorted, counting the number of duplicates
         size_t duplicate_count = 0;
-        for (size_t i = 0; i < nodes_ids.size(); i++) {
+        for (size_t i = 0; i < nodes_ids.size() - 1; i++) {
             if (nodes_ids[i] == nodes_ids[i + 1]) {
                 duplicate_count++;
             }
